@@ -102,7 +102,7 @@ export const pointTuplesToPath = (segments: PointTuple[]): string => {
  * @param polyPoints
  * @param hullPadding
  */
-export function hullPath(polyPoints: PointTuple[], hullPadding: number | HullPaddingGetter = 0): { path: string, segments?: PointTuple[][] } {
+export function hullPathAndSegments(polyPoints: PointTuple[], hullPadding: number | HullPaddingGetter = 0): { path: string, segments?: PointTuple[][] } {
   const hp = typeof hullPadding === 'number' ? () => hullPadding : hullPadding;
 
   // Handle special cases
@@ -141,4 +141,13 @@ export function hullPath(polyPoints: PointTuple[], hullPadding: number | HullPad
       .join(' '),
     segments
   };
+}
+
+// Returns the SVG path data string representing the polygon, expanded and rounded.
+/**
+ * @param polyPoints
+ * @param hullPadding
+ */
+export function hullPath(polyPoints: PointTuple[], hullPadding: number | HullPaddingGetter = 0): string {
+  return hullPathAndSegments(polyPoints, hullPadding).path;
 }

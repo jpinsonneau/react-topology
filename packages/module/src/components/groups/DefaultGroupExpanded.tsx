@@ -8,7 +8,7 @@ import CollapseIcon from '@patternfly/react-icons/dist/esm/icons/compress-alt-ic
 import NodeLabel from '../nodes/labels/NodeLabel';
 import { Layer } from '../layers';
 import { GROUPS_LAYER } from '../../const';
-import { hullPath, maxPadding, useCombineRefs, useHover } from '../../utils';
+import { hullPathAndSegments, maxPadding, useCombineRefs, useHover } from '../../utils';
 import { BadgeLocation, isGraph, Node, NodeShape, NodeStyle, PointTuple } from '../../types';
 import {
   useDragNode,
@@ -146,7 +146,7 @@ const DefaultGroupExpanded: React.FunctionComponent<DefaultGroupExpandedProps> =
     if (!hullPoints) {
       return null;
     }
-    const pathAndSegments = hullPath(hullPoints as PointTuple[], hullPadding);
+    const pathAndSegments = hullPathAndSegments(hullPoints as PointTuple[], hullPadding);
     // change the box only when not dragging
     pathRef.current = pathAndSegments.path;
     element.setLastSegments(pathAndSegments.segments);

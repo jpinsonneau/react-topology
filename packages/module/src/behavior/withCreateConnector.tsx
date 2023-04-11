@@ -199,7 +199,7 @@ const CreateConnectorWidget: React.FunctionComponent<CreateConnectorWidgetProps>
                 [endPoint.x, endPoint.y]
               ],
               7
-            ).path}
+            )}
             fillOpacity="0"
           />
         </g>
