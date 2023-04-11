@@ -126,6 +126,7 @@ export interface EdgeModel extends ElementModel {
   target?: string;
   edgeStyle?: EdgeStyle;
   animationSpeed?: EdgeAnimationSpeed;
+  aggregate?: boolean;
   bendpoints?: PointTuple[];
 }
 
@@ -190,6 +191,8 @@ export interface GraphElement<E extends ElementModel = ElementModel, D = any> ex
   isVisible(): boolean;
   getData(): D | undefined;
   setData(data: D | undefined): void;
+  getLastSegments(): PointTuple[][] | null;
+  setLastSegments(segments: PointTuple[][] | null): void;
   getChildren(): GraphElement[];
   insertChild(child: GraphElement, index: number): void;
   appendChild(child: GraphElement): void;
@@ -246,6 +249,8 @@ export interface Edge<E extends EdgeModel = EdgeModel, D = any> extends GraphEle
   getTargetAnchorNode(): Node;
   getStartPoint(): Point;
   setStartPoint(x?: number, y?: number): void;
+  getAggregate(): boolean;
+  setAggregate(aggregate: boolean): void;
   getEndPoint(): Point;
   setEndPoint(x?: number, y?: number): void;
   getBendpoints(): Point[];

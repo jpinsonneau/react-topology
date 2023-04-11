@@ -165,7 +165,7 @@ export const useTopologyOptions = (
         variant={SelectVariant.checkbox}
         customContent={selectContent}
         onToggle={() => setNodeOptionsOpen(prev => !prev)}
-        onSelect={() => {}}
+        onSelect={() => { }}
         isCheckboxSelectionBadgeHidden
         isOpen={nodeOptionsOpen}
         placeholderText="Node options"
@@ -207,7 +207,7 @@ export const useTopologyOptions = (
         variant={SelectVariant.checkbox}
         customContent={selectContent}
         onToggle={() => setNodeShapesOpen(prev => !prev)}
-        onSelect={() => {}}
+        onSelect={() => { }}
         isCheckboxSelectionBadgeHidden
         isOpen={nodeShapesOpen}
         placeholderText="Node shapes"
@@ -263,6 +263,11 @@ export const useTopologyOptions = (
           isChecked={edgeOptions.edgeTags}
           onClick={() => setEdgeOptions(prev => ({ ...prev, edgeTags: !prev.edgeTags }))}
         />
+        <SelectOption
+          value="Aggregate"
+          isChecked={edgeOptions.edgeAggregate}
+          onClick={() => setEdgeOptions(prev => ({ ...prev, edgeAggregate: !prev.edgeAggregate }))}
+        />
       </div>
     );
 
@@ -271,7 +276,7 @@ export const useTopologyOptions = (
         variant={SelectVariant.checkbox}
         customContent={selectContent}
         onToggle={() => setEdgeOptionsOpen(prev => !prev)}
-        onSelect={() => {}}
+        onSelect={() => { }}
         isCheckboxSelectionBadgeHidden
         isOpen={edgeOptionsOpen}
         placeholderText="Edge options"

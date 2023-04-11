@@ -146,12 +146,15 @@ const DefaultGroupExpanded: React.FunctionComponent<DefaultGroupExpandedProps> =
     if (!hullPoints) {
       return null;
     }
-
+    const pathAndSegments = hullPath(hullPoints as PointTuple[], hullPadding);
     // change the box only when not dragging
-    pathRef.current = hullPath(hullPoints as PointTuple[], hullPadding);
+    pathRef.current = pathAndSegments.path;
+    element.setLastSegments(pathAndSegments.segments);
 
     // Compute the location of the group label.
     labelLocation.current = computeLabelLocation(hullPoints as PointWithSize[]);
+  } else {
+    element.setLastSegments(null);
   }
 
   const groupClassName = css(

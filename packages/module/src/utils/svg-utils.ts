@@ -97,23 +97,23 @@ export const pointTuplesToPath = (segments: PointTuple[]): string => {
   return pathSegments.join(' ');
 };
 
-// Returns the SVG path data string representing the polygon, expanded and rounded.
+// Returns the SVG path data string representing the polygon and it's segments if available, expanded and rounded.
 /**
  * @param polyPoints
  * @param hullPadding
  */
-export function hullPath(polyPoints: PointTuple[], hullPadding: number | HullPaddingGetter = 0): string {
+export function hullPath(polyPoints: PointTuple[], hullPadding: number | HullPaddingGetter = 0): { path: string, segments?: PointTuple[][] } {
   const hp = typeof hullPadding === 'number' ? () => hullPadding : hullPadding;
 
   // Handle special cases
   if (!polyPoints || polyPoints.length < 1) {
-    return '';
+    return { path: '' };
   }
   if (polyPoints.length === 1) {
-    return roundedHull1(polyPoints, hp);
+    return { path: roundedHull1(polyPoints, hp) };
   }
   if (polyPoints.length === 2) {
-    return roundedHull2(polyPoints, hp);
+    return { path: roundedHull2(polyPoints, hp) };
   }
 
   const segments: PointTuple[][] = new Array(polyPoints.length);
@@ -131,12 +131,14 @@ export function hullPath(polyPoints: PointTuple[], hullPadding: number | HullPad
     ];
   }
 
-  return segments
-    .map((segment, index) => {
-      const p0 = index === 0 ? polyPoints[polyPoints.length - 1] : polyPoints[index - 1];
-      return `${index === 0 ? `M ${segments[segments.length - 1][1]} ` : ''}A ${hp(p0)},${hp(p0)},0,0,0,${
-        segment[0]
-      } L ${segment[1]}`;
-    })
-    .join(' ');
+  return {
+    path: segments
+      .map((segment, index) => {
+        const p0 = index === 0 ? polyPoints[polyPoints.length - 1] : polyPoints[index - 1];
+        return `${index === 0 ? `M ${segments[segments.length - 1][1]} ` : ''}A ${hp(p0)},${hp(p0)},0,0,0,${segment[0]
+          } L ${segment[1]}`;
+      })
+      .join(' '),
+    segments
+  };
 }

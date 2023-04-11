@@ -61,7 +61,7 @@ export const getPointsForSides = (numSides: number, size: number, padding = 0): 
 
 export const getHullPath = (points: PointTuple[], padding: number): string => {
   const hullPoints: PointTuple[] = polygonHull(points);
-  return hullPath(hullPoints, padding);
+  return hullPath(hullPoints, padding).path;
 };
 export const getPathForSides = (numSides: number, size: number, padding = 0): string => {
   const points = getPointsForSides(numSides, size, padding);
