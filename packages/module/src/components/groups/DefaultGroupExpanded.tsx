@@ -153,8 +153,6 @@ const DefaultGroupExpanded: React.FunctionComponent<DefaultGroupExpandedProps> =
 
     // Compute the location of the group label.
     labelLocation.current = computeLabelLocation(hullPoints as PointWithSize[]);
-  } else {
-    element.setLastSegments(null);
   }
 
   const groupClassName = css(

@@ -14,7 +14,8 @@ import {
   NODE_COLLAPSE_CHANGE_EVENT,
   NODE_POSITIONED_EVENT,
   NodeStatus,
-  LabelPosition
+  LabelPosition,
+  PointTuple
 } from '../types';
 import CenterAnchor from '../anchors/CenterAnchor';
 import Rect from '../geom/Rect';
@@ -118,6 +119,16 @@ export default class BaseNode<E extends NodeModel = NodeModel, D = any> extends 
       .filter(e => e.getTarget() === this);
   }
 
+  private lastSegments: PointTuple[][] | null;
+
+  getLastSegments(): PointTuple[][] {
+    return this.lastSegments;
+  }
+
+  setLastSegments(segments: PointTuple[][]): void {
+    this.lastSegments = segments;
+  }
+
   getChildren(): GraphElement[] {
     if (this.isCollapsed()) {
       return super.getChildren().filter(isEdge);
@@ -186,9 +197,10 @@ export default class BaseNode<E extends NodeModel = NodeModel, D = any> extends 
       return;
     }
     this.position = point;
+    const wasPositioned = this.positioned;
     this.positioned = true;
     try {
-      this.getController().fireEvent(NODE_POSITIONED_EVENT, { node: this });
+      this.getController().fireEvent(NODE_POSITIONED_EVENT, { node: this, wasPositioned });
       // eslint-disable-next-line no-empty
     } catch (e) {}
   }

@@ -1,35 +1,23 @@
 import * as _ from 'lodash';
 import { action } from 'mobx';
 import {
-  Edge,
-  Graph,
-  Layout,
-  Node,
-  ADD_CHILD_EVENT,
-  REMOVE_CHILD_EVENT,
-  GRAPH_LAYOUT_END_EVENT,
-  ElementChildEventListener,
-  NODE_COLLAPSE_CHANGE_EVENT,
-  NodeCollapseChangeEventListener,
-  ElementVisibilityChangeEventListener,
-  ELEMENT_VISIBILITY_CHANGE_EVENT,
-  ElementVisibilityChangeEvent,
-  isNode
-} from '../types';
-import { leafNodeElements, groupNodeElements, getClosestVisibleParent } from '../utils';
-import {
-  DRAG_MOVE_OPERATION,
-  DRAG_NODE_END_EVENT,
-  DRAG_NODE_START_EVENT,
   DragEvent,
   DragNodeEventListener,
-  DragOperationWithType
+  DragOperationWithType, DRAG_MOVE_OPERATION,
+  DRAG_NODE_END_EVENT,
+  DRAG_NODE_START_EVENT
 } from '../behavior';
 import { BaseEdge } from '../elements';
+import {
+  ADD_CHILD_EVENT, Edge, ElementChildEventListener, ElementVisibilityChangeEvent, ElementVisibilityChangeEventListener,
+  ELEMENT_VISIBILITY_CHANGE_EVENT, Graph, GRAPH_LAYOUT_END_EVENT, isNode, Layout,
+  Node, NodeCollapseChangeEventListener, NodePositionedEventListener, NODE_COLLAPSE_CHANGE_EVENT, NODE_POSITIONED_EVENT, REMOVE_CHILD_EVENT
+} from '../types';
+import { getClosestVisibleParent, groupNodeElements, leafNodeElements } from '../utils';
 import { ForceSimulation } from './ForceSimulation';
-import { LayoutNode } from './LayoutNode';
 import { LayoutGroup } from './LayoutGroup';
 import { LayoutLink } from './LayoutLink';
+import { LayoutNode } from './LayoutNode';
 import { LayoutOptions } from './LayoutOptions';
 
 export const LAYOUT_DEFAULTS: LayoutOptions = {
@@ -81,7 +69,7 @@ export class BaseLayout implements Layout {
     this.startListening();
   }
 
-  protected onSimulationEnd = () => {};
+  protected onSimulationEnd = () => { };
 
   destroy(): void {
     if (this.options.allowDrag) {
@@ -97,10 +85,10 @@ export class BaseLayout implements Layout {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected initDrag(element: Node, event: DragEvent, operation: DragOperationWithType): void {}
+  protected initDrag(element: Node, event: DragEvent, operation: DragOperationWithType): void { }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected endDrag(element: Node, event: DragEvent, operation: DragOperationWithType): void {}
+  protected endDrag(element: Node, event: DragEvent, operation: DragOperationWithType): void { }
 
   handleDragStart = (element: Node, event: DragEvent, operation: DragOperationWithType) => {
     this.initDrag(element, event, operation);
@@ -180,6 +168,7 @@ export class BaseLayout implements Layout {
       controller.addEventListener(REMOVE_CHILD_EVENT, this.handleChildRemoved);
       controller.addEventListener(ELEMENT_VISIBILITY_CHANGE_EVENT, this.handleElementVisibilityChange);
       controller.addEventListener(NODE_COLLAPSE_CHANGE_EVENT, this.handleNodeCollapse);
+      controller.addEventListener(NODE_POSITIONED_EVENT, this.handleNodePositionChange);
     }
   }
 
@@ -197,6 +186,7 @@ export class BaseLayout implements Layout {
       controller.removeEventListener(REMOVE_CHILD_EVENT, this.handleChildRemoved);
       controller.removeEventListener(ELEMENT_VISIBILITY_CHANGE_EVENT, this.handleElementVisibilityChange);
       controller.removeEventListener(NODE_COLLAPSE_CHANGE_EVENT, this.handleNodeCollapse);
+      controller.removeEventListener(NODE_POSITIONED_EVENT, this.handleNodePositionChange);
     }
   }
 
@@ -230,6 +220,13 @@ export class BaseLayout implements Layout {
     }
   };
 
+  private handleNodePositionChange: NodePositionedEventListener = ({ wasPositioned }): void => {
+    // update aggregated bendpoints on position changed after first render
+    if (wasPositioned) {
+      this.scheduleLayout();
+    }
+  }
+
   private scheduleLayout = (): void => {
     if (!this.scheduleHandle) {
       this.scheduleHandle = window.requestAnimationFrame(() => {
@@ -238,7 +235,7 @@ export class BaseLayout implements Layout {
           this.runLayout(false, this.scheduleRestart);
           this.scheduleRestart = false;
           // eslint-disable-next-line no-empty
-        } catch (e) {}
+        } catch (e) { }
       });
     }
   };
@@ -302,8 +299,11 @@ export class BaseLayout implements Layout {
 
   // Default is to clear any initial bend points
   protected initializeEdgeBendpoints = (edge: Edge): void => {
-    // remove any bendpoints
-    if (edge.getBendpoints().length > 0) {
+    if (edge.getAggregate()) {
+      // set aggregated bendpoints
+      edge.updateAggregatedBendpoints();
+    } else if (edge.getBendpoints().length > 0) {
+      // remove any bendpoints
       edge.setBendpoints([]);
     }
   };
@@ -398,14 +398,14 @@ export class BaseLayout implements Layout {
     nodes: LayoutNode[], // eslint-disable-line @typescript-eslint/no-unused-vars
     edges: LayoutLink[], // eslint-disable-line @typescript-eslint/no-unused-vars
     groups: LayoutGroup[] // eslint-disable-line @typescript-eslint/no-unused-vars
-  ): void {}
+  ): void { }
 
   protected stopSimulation(): void {
     this.forceSimulation.haltForceSimulation();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected startLayout(graph: Graph, initialRun: boolean, addingNodes: boolean, onEnd?: () => void): void {}
+  protected startLayout(graph: Graph, initialRun: boolean, addingNodes: boolean, onEnd?: () => void): void { }
 
   // Interim, remove and update startLayout to public in next breaking change build
   public doStartLayout(graph: Graph, initialRun: boolean, addingNodes: boolean, onEnd?: () => void): void {

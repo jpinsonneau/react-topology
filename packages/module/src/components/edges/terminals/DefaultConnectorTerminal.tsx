@@ -1,19 +1,20 @@
-import * as React from 'react';
-import { observer } from 'mobx-react';
-import * as _ from 'lodash';
 import { css } from '@patternfly/react-styles';
-import styles from '../../../css/topology-components';
-import { Edge, EdgeTerminalType, NodeStatus } from '../../../types';
+import { observer } from 'mobx-react';
+import * as React from 'react';
 import { ConnectDragSource } from '../../../behavior/dnd-types';
+import styles from '../../../css/topology-components';
+import { Point } from '../../../geom';
+import { EdgeTerminalType, NodeStatus } from '../../../types';
+import { StatusModifier } from '../../../utils';
 import ConnectorArrow from './ConnectorArrow';
+import ConnectorArrowAlt from './ConnectorArrowAlt';
+import ConnectorCircle from './ConnectorCircle';
 import ConnectorCross from './ConnectorCross';
 import ConnectorSquare from './ConnectorSquare';
-import ConnectorCircle from './ConnectorCircle';
-import ConnectorArrowAlt from './ConnectorArrowAlt';
-import { StatusModifier } from '../../../utils';
 
 interface EdgeConnectorArrowProps {
-  edge: Edge;
+  startPoint: Point;
+  endPoint: Point;
   className?: string;
   highlight?: boolean;
   isTarget?: boolean;
@@ -25,7 +26,8 @@ interface EdgeConnectorArrowProps {
 
 const DefaultConnectorTerminal: React.FunctionComponent<EdgeConnectorArrowProps> = ({
   className,
-  edge,
+  startPoint,
+  endPoint,
   isTarget = true,
   terminalType,
   status,
@@ -54,9 +56,6 @@ const DefaultConnectorTerminal: React.FunctionComponent<EdgeConnectorArrowProps>
   if (!Terminal) {
     return null;
   }
-  const bendPoints = edge.getBendpoints();
-  const startPoint = isTarget ? _.last(bendPoints) || edge.getStartPoint() : _.head(bendPoints) || edge.getEndPoint();
-  const endPoint = isTarget ? edge.getEndPoint() : edge.getStartPoint();
   const classes = css(styles.topologyEdge, className, StatusModifier[status]);
 
   return <Terminal className={classes} startPoint={startPoint} endPoint={endPoint} isTarget={isTarget} {...others} />;

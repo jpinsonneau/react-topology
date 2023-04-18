@@ -105,14 +105,17 @@ export default class BaseEdge<E extends EdgeModel = EdgeModel, D = any> extends 
   }
 
   getBendpoints(): Point[] {
-    if (this.aggregate) {
-      return getAggregatedEdgeBendpoints(this);
-    }
     return this.bendpoints || [];
   }
 
   setBendpoints(points: Point[]) {
     this.bendpoints = points;
+  }
+
+  updateAggregatedBendpoints(): void {
+    if (this.aggregate) {
+      this.bendpoints = getAggregatedEdgeBendpoints(this);
+    }
   }
 
   removeBendpoint(point: Point | number): void {

@@ -1,17 +1,17 @@
-import * as React from 'react';
-import * as _ from 'lodash';
-import { observer } from 'mobx-react';
-import { Edge, EdgeTerminalType, isNode, NodeStatus } from '../../types';
-import { ConnectDragSource, OnSelect } from '../../behavior';
-import { getClosestVisibleParent, useHover } from '../../utils';
-import { Layer } from '../layers';
 import { css } from '@patternfly/react-styles';
-import styles from '../../css/topology-components';
-import { getEdgeAnimationDuration, getEdgeStyleClassModifier } from '../../utils/style-utils';
-import DefaultConnectorTerminal from './terminals/DefaultConnectorTerminal';
+import _ from 'lodash';
+import { observer } from 'mobx-react';
+import * as React from 'react';
+import { ConnectDragSource, EDGE_HANDLER_PREFIX, OnSelect } from '../../behavior';
 import { TOP_LAYER } from '../../const';
-import DefaultConnectorTag from './DefaultConnectorTag';
+import styles from '../../css/topology-components';
 import { Point } from '../../geom';
+import { Edge, EdgeTerminalType, isNode, NodeStatus } from '../../types';
+import { getClosestVisibleParent, useHover } from '../../utils';
+import { getEdgeAnimationDuration, getEdgeStyleClassModifier } from '../../utils/style-utils';
+import { Layer } from '../layers';
+import DefaultConnectorTag from './DefaultConnectorTag';
+import DefaultConnectorTerminal from './terminals/DefaultConnectorTerminal';
 import { getConnectorStartPoint } from './terminals/terminalUtils';
 
 interface DefaultEdgeProps {
@@ -65,7 +65,18 @@ interface DefaultEdgeProps {
   contextMenuOpen?: boolean;
 }
 
-const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = ({
+interface EdgeHandlerProps extends DefaultEdgeProps {
+  elements: Edge[];
+  firstOrLast: boolean;
+  current: Point;
+  next: Point;
+}
+
+const EdgeHandler: React.FunctionComponent<EdgeHandlerProps> = ({
+  firstOrLast,
+  current,
+  next,
+  elements,
   element,
   dragging,
   sourceDragRef,
@@ -84,15 +95,12 @@ const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = ({
   tag,
   tagClass,
   tagStatus,
-  children,
   className,
   selected,
   onSelect,
   onContextMenu
 }) => {
   const [hover, hoverRef] = useHover();
-  const startPoint = element.getStartPoint();
-  const endPoint = element.getEndPoint();
 
   // eslint-disable-next-line patternfly-react/no-layout-effect
   React.useLayoutEffect(() => {
@@ -103,13 +111,6 @@ const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = ({
     }
   }, [hover, dragging, onShowRemoveConnector, onHideRemoveConnector]);
 
-  // If the edge connects to nodes in a collapsed group don't draw
-  const sourceParent = getClosestVisibleParent(element.getSource());
-  const targetParent = getClosestVisibleParent(element.getTarget());
-  if (isNode(sourceParent) && sourceParent.isCollapsed() && sourceParent === targetParent) {
-    return null;
-  }
-
   const groupClassName = css(
     styles.topologyEdge,
     className,
@@ -117,31 +118,23 @@ const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = ({
     hover && !dragging && 'pf-m-hover',
     selected && !dragging && 'pf-m-selected'
   );
-
-  const edgeAnimationDuration = animationDuration ?? getEdgeAnimationDuration(element.getEdgeAnimationSpeed());
   const linkClassName = css(styles.topologyEdgeLink, getEdgeStyleClassModifier(element.getEdgeStyle()));
-
-  const bendpoints = element.getBendpoints();
-
-  const d = `M${startPoint.x} ${startPoint.y} ${bendpoints.map((b: Point) => `L${b.x} ${b.y} `).join('')}L${
-    endPoint.x
-  } ${endPoint.y}`;
+  const edgeAnimationDuration = animationDuration ??
+    elements.reduce((prev, curr) => prev + getEdgeAnimationDuration(curr.getEdgeAnimationSpeed()), 0) / elements.length;
 
   const bgStartPoint =
     !startTerminalType || startTerminalType === EdgeTerminalType.none
-      ? [startPoint.x, startPoint.y]
-      : getConnectorStartPoint(_.head(bendpoints) || endPoint, startPoint, startTerminalSize);
+      ? [current.x, current.y]
+      : getConnectorStartPoint(next, current, startTerminalSize);
   const bgEndPoint =
     !endTerminalType || endTerminalType === EdgeTerminalType.none
-      ? [endPoint.x, endPoint.y]
-      : getConnectorStartPoint(_.last(bendpoints) || startPoint, endPoint, endTerminalSize);
-  const backgroundPath = `M${bgStartPoint[0]} ${bgStartPoint[1]} ${bendpoints
-    .map((b: Point) => `L${b.x} ${b.y} `)
-    .join('')}L${bgEndPoint[0]} ${bgEndPoint[1]}`;
+      ? [next.x, next.y]
+      : getConnectorStartPoint(current, next, endTerminalSize);
 
   return (
     <Layer id={dragging || hover ? TOP_LAYER : undefined}>
       <g
+        id={`${EDGE_HANDLER_PREFIX}${JSON.stringify(elements.map(e => e.getId()))}`}
         ref={hoverRef}
         data-test-id="edge-handler"
         className={groupClassName}
@@ -150,24 +143,28 @@ const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = ({
       >
         <path
           className={css(styles.topologyEdgeBackground)}
-          d={backgroundPath}
+          d={`M${bgStartPoint[0]} ${bgStartPoint[1]} L${bgEndPoint[0]} ${bgEndPoint[1]}`}
           onMouseEnter={onShowRemoveConnector}
           onMouseLeave={onHideRemoveConnector}
         />
-        <path className={linkClassName} d={d} style={{ animationDuration: `${edgeAnimationDuration}s` }} />
-        {tag && (
+        <path
+          className={linkClassName}
+          d={`M${current.x} ${current.y} L${next.x} ${next.y}`}
+          style={{ animationDuration: `${edgeAnimationDuration}s` }}
+        />
+        {tag && firstOrLast && (
           <DefaultConnectorTag
             className={tagClass}
-            startPoint={element.getStartPoint()}
-            endPoint={element.getEndPoint()}
+            startPoint={current}
+            endPoint={next}
             tag={tag}
             status={tagStatus}
           />
         )}
         <DefaultConnectorTerminal
           className={startTerminalClass}
-          isTarget={false}
-          edge={element}
+          startPoint={next}
+          endPoint={current}
           size={startTerminalSize}
           dragRef={sourceDragRef}
           terminalType={startTerminalType}
@@ -178,15 +175,59 @@ const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = ({
           className={endTerminalClass}
           isTarget
           dragRef={targetDragRef}
-          edge={element}
+          startPoint={current}
+          endPoint={next}
           size={endTerminalSize}
           terminalType={endTerminalType}
           status={endTerminalStatus}
           highlight={dragging || hover}
         />
-        {children}
       </g>
     </Layer>
+  );
+};
+
+const DefaultEdge: React.FunctionComponent<DefaultEdgeProps> = (props) => {
+  // If the edge connects to nodes in a collapsed group don't draw
+  const sourceParent = getClosestVisibleParent(props.element.getSource());
+  const targetParent = getClosestVisibleParent(props.element.getTarget());
+  if (isNode(sourceParent) && sourceParent.isCollapsed() && sourceParent === targetParent) {
+    return null;
+  }
+
+  const handlers: React.ReactNode[] = [];
+  const sortedEdges = props.element.getGraph().getEdges(true);
+  const allPoints = [props.element.getStartPoint(), ...props.element.getBendpoints(), props.element.getEndPoint()];
+  for (let i = 0; i < allPoints.length - 1; i++) {
+    const current = allPoints[i];
+    const next = allPoints[i + 1];
+
+    const firstOrLast = i === 0 || i === allPoints.length - 2;
+    const elements = firstOrLast ? [props.element] :
+      sortedEdges
+        .filter(e =>
+          e.getBendpoints().find(p => current.equals(p)) &&
+          e.getBendpoints().find(p => next.equals(p))
+        );
+
+    if (firstOrLast || _.first(elements) === props.element) {
+      handlers.push(
+        <EdgeHandler
+          {...props}
+          firstOrLast={firstOrLast}
+          current={current}
+          next={next}
+          elements={elements}
+        />
+      );
+    }
+  }
+
+  return (
+    <>
+      {...handlers}
+      {props.children}
+    </>
   );
 };
 

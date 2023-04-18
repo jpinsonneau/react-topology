@@ -61,6 +61,11 @@ export default class BaseGraph<E extends GraphModel = GraphModel, D = any> exten
   }
 
   @computed
+  private get sortedEdges(): Edge[] {
+    return this.edges.sort((a, b) => a.getId().localeCompare(b.getId()));
+  }
+
+  @computed
   private get nodes(): Node[] {
     return this.getChildren().filter(isNode);
   }
@@ -91,7 +96,7 @@ export default class BaseGraph<E extends GraphModel = GraphModel, D = any> exten
     try {
       this.getController().fireEvent(GRAPH_POSITION_CHANGE_EVENT, { graph: this });
       // eslint-disable-next-line no-empty
-    } catch (e) {}
+    } catch (e) { }
     this.scaleExtent = scaleExtent;
   }
 
@@ -134,7 +139,7 @@ export default class BaseGraph<E extends GraphModel = GraphModel, D = any> exten
     try {
       this.getController().fireEvent(GRAPH_POSITION_CHANGE_EVENT, { graph: this });
       // eslint-disable-next-line no-empty
-    } catch (e) {}
+    } catch (e) { }
     this.position = point;
   }
 
@@ -150,7 +155,10 @@ export default class BaseGraph<E extends GraphModel = GraphModel, D = any> exten
     return this.nodes;
   }
 
-  getEdges(): Edge[] {
+  getEdges(sort = false): Edge[] {
+    if (sort) {
+      return this.sortedEdges;
+    }
     return this.edges;
   }
 
@@ -185,7 +193,7 @@ export default class BaseGraph<E extends GraphModel = GraphModel, D = any> exten
     try {
       this.getController().fireEvent(GRAPH_POSITION_CHANGE_EVENT, { graph: this });
       // eslint-disable-next-line no-empty
-    } catch (e) {}
+    } catch (e) { }
     this.scale = scale;
   }
 

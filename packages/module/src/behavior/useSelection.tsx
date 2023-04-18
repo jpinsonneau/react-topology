@@ -4,6 +4,7 @@ import { observer } from 'mobx-react';
 import { EventListener } from '../types';
 import ElementContext from '../utils/ElementContext';
 
+export const EDGE_HANDLER_PREFIX = 'edge-handler-';
 export const SELECTION_EVENT = 'selection';
 export const SELECTION_STATE = 'selectedIds';
 
@@ -38,12 +39,23 @@ export const useSelection = ({ multiSelect, controlled, raiseOnSelect = true }: 
   const onSelect = React.useCallback((e: React.MouseEvent): void => {
     const actionFn = action((e: React.MouseEvent): void => {
       e.stopPropagation();
+      const targetId = e.currentTarget.id;
       const id = elementRef.current.getId();
       const state = elementRef.current.getController().getState<SelectionHandlerState>();
       const idx = state.selectedIds ? state.selectedIds.indexOf(id) : -1;
       let selectedIds: string[];
       let raise = false;
-      if (multiSelect && (e.ctrlKey || e.metaKey)) {
+      if (targetId.startsWith(EDGE_HANDLER_PREFIX)) {
+        const newIds = JSON.parse(targetId.slice(EDGE_HANDLER_PREFIX.length)) as string[];
+        if (!state.selectedIds) {
+          raise = true;
+          selectedIds = newIds;
+        } else if (idx === -1) {
+          selectedIds = newIds;
+        } else {
+          selectedIds = [];
+        }
+      } else if (multiSelect && (e.ctrlKey || e.metaKey)) {
         if (!state.selectedIds) {
           raise = true;
           selectedIds = [id];

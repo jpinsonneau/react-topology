@@ -64,7 +64,8 @@ const getAggregatedPositions = (edge: BaseEdge) => {
   const srcAggregates: Aggregate[] = [];
   const tgtAggregates: Aggregate[] = [];
 
-  const edges = edge.getGraph().getEdges();
+  const edges = edge.getGraph().getEdges(true);
+  const allConnectedNodes = edges.flatMap(e => [e.getSource(), e.getTarget()]);
 
   let topReached = false;
   let nestingDepth = 1;
@@ -90,7 +91,7 @@ const getAggregatedPositions = (edge: BaseEdge) => {
       edges.forEach(e => {
         const parent = getParentAtDepth(getEdgePeer(e), nestingDepth);
         if (parent === curr) {
-          const childNodes = getElementChildNodes(parent);
+          const childNodes = getElementChildNodes(parent).filter(c => allConnectedNodes.includes(c));
           childNodes.forEach(c => {
             if (!relatedPoints.includes(c)) {
               relatedPoints.push(c);
@@ -114,10 +115,16 @@ const getAggregatedPositions = (edge: BaseEdge) => {
 
 
       if (pos) {
+        // segments are only available for groups
+        let segments: [Point, Point][] = null;
+        if (curr.getKind() === ModelKind.node) {
+          segments = (curr as Node).getLastSegments()?.map(s => [new Point(s[0][0], s[0][1]), new Point(s[1][0], s[1][1])]);
+        }
+
         const agg = {
           pos,
           edge,
-          segments: curr.getLastSegments()?.map(s => [new Point(s[0][0], s[0][1]), new Point(s[1][0], s[1][1])])
+          segments,
         } as Aggregate;
         if (topReached) {
           tgtAggregates.push(agg);
@@ -188,7 +195,7 @@ export const getAggregatedEdgeBendpoints = (edge: BaseEdge) => {
         }
       }
 
-      if (point) {
+      if (point && !allPoints.some(p => point.equals(p))) {
         allPoints.push(point);
       }
     }

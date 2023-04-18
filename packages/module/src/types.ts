@@ -191,8 +191,6 @@ export interface GraphElement<E extends ElementModel = ElementModel, D = any> ex
   isVisible(): boolean;
   getData(): D | undefined;
   setData(data: D | undefined): void;
-  getLastSegments(): PointTuple[][] | null;
-  setLastSegments(segments: PointTuple[][] | null): void;
   getChildren(): GraphElement[];
   insertChild(child: GraphElement, index: number): void;
   appendChild(child: GraphElement): void;
@@ -231,6 +229,8 @@ export interface Node<E extends NodeModel = NodeModel, D = any> extends GraphEle
   setNodeStatus(shape: NodeStatus): void;
   getSourceEdges(): Edge[];
   getTargetEdges(): Edge[];
+  getLastSegments(): PointTuple[][] | null;
+  setLastSegments(segments: PointTuple[][] | null): void;
   getAllNodeChildren(): Node[]; // Return all children regardless of collapse status or child groups' collapsed status
   isDimensionsInitialized(): boolean;
   isPositioned(): boolean;
@@ -256,11 +256,12 @@ export interface Edge<E extends EdgeModel = EdgeModel, D = any> extends GraphEle
   getBendpoints(): Point[];
   setBendpoints(points: Point[]): void;
   removeBendpoint(point: Point | number): void;
+  updateAggregatedBendpoints(): void;
 }
 
 export interface Graph<E extends GraphModel = GraphModel, D = any> extends GraphElement<E, D> {
   getNodes(): Node[];
-  getEdges(): Edge[];
+  getEdges(sort?: boolean): Edge[];
   getBounds(): Rect;
   setBounds(bounds: Rect): void;
   getPosition(): Point;
@@ -344,7 +345,7 @@ export type ElementVisibilityChangeEvent = ElementEvent & { visible: boolean };
 
 export type ElementChildEventListener = EventListener<[ElementEvent & { child: GraphElement }]>;
 export type ElementVisibilityChangeEventListener = EventListener<[ElementVisibilityChangeEvent]>;
-
+export type NodePositionedEventListener = EventListener<[{ node: Node, wasPositioned: boolean }]>;
 export type NodeCollapseChangeEventListener = EventListener<[{ node: Node }]>;
 
 export type GraphLayoutEndEventListener = EventListener<[{ graph: Graph }]>;
