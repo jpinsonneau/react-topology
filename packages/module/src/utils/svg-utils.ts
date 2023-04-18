@@ -117,25 +117,27 @@ export function hullPathAndSegments(polyPoints: PointTuple[], hullPadding: numbe
   }
 
   const segments: PointTuple[][] = new Array(polyPoints.length);
+  const paddedSegments: PointTuple[][] = new Array(polyPoints.length);
 
   // Calculate each offset (outwards) segment of the convex hull.
-  for (let segmentIndex = 0; segmentIndex < segments.length; ++segmentIndex) {
+  for (let segmentIndex = 0; segmentIndex < paddedSegments.length; ++segmentIndex) {
     const p0 = segmentIndex === 0 ? polyPoints[polyPoints.length - 1] : polyPoints[segmentIndex - 1];
     const p1 = polyPoints[segmentIndex];
+    segments[segmentIndex] = [p0, p1];
 
     // Compute the offset vector for the line segment, with length = hullPadding.
     // const offset = vecScale(hullPadding, unitNormal(p0, p1));
-    segments[segmentIndex] = [
+    paddedSegments[segmentIndex] = [
       vecSum(p0, vecScale(hp(p0), unitNormal(p0, p1))),
       vecSum(p1, vecScale(hp(p1), unitNormal(p0, p1)))
     ];
   }
 
   return {
-    path: segments
+    path: paddedSegments
       .map((segment, index) => {
         const p0 = index === 0 ? polyPoints[polyPoints.length - 1] : polyPoints[index - 1];
-        return `${index === 0 ? `M ${segments[segments.length - 1][1]} ` : ''}A ${hp(p0)},${hp(p0)},0,0,0,${segment[0]
+        return `${index === 0 ? `M ${paddedSegments[paddedSegments.length - 1][1]} ` : ''}A ${hp(p0)},${hp(p0)},0,0,0,${segment[0]
           } L ${segment[1]}`;
       })
       .join(' '),
