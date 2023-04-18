@@ -106,8 +106,9 @@ const getAggregatedPositions = (edge: BaseEdge) => {
         const dimensions = p.getDimensions();
         pointPos.translate(dimensions.width / 2, dimensions.height / 2);
 
+        // sum related position coordinates
         if (pos) {
-          pos.setLocation((pos.x + pointPos.x) / 2, (pos.y + pointPos.y) / 2);
+          pos.translate(pointPos.x, pointPos.y);
         } else {
           pos = new Point(pointPos.x, pointPos.y);
         }
@@ -115,6 +116,8 @@ const getAggregatedPositions = (edge: BaseEdge) => {
 
 
       if (pos) {
+        // get center by dividing 
+        pos = pos.scale(1 / relatedPoints.length);
         // segments are only available for groups
         let segments: [Point, Point][] = null;
         if (curr.getKind() === ModelKind.node) {
